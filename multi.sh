@@ -76,6 +76,57 @@ yellow " VPS相关信息如下："
     white " -----------------------------------------------" 
 sleep 3s
 
+warpwg=$(systemctl is-active wg-quick@wgcf)
+case ${warpwg} in
+active)
+     WireGuardStatus=$(green "运行中")
+     ;;
+*)
+     WireGuardStatus=$(red "未运行")
+esac
+
+
+v4=`wget -qO- ipv4.ip.sb`
+WARPIPv4Status=$(curl -s4 https://www.cloudflare.com/cdn-cgi/trace | grep warp | cut -d= -f2)
+    case ${WARPIPv4Status} in
+    on)
+        WARPIPv4Status=$(green "WARP已开启,当前IPV4地址：$v4 ")
+        ;;
+    off)
+        WARPIPv4Status=$(yellow "WARP未开启，当前IPV4地址：$v4 ")
+        ;;
+    *)
+        WARPIPv4Status=$(red "无IPV4 ")
+    esac
+
+v66=`ping6 240c::6666 -c 1 | grep received | awk 'NR==1 {print $4}'`
+
+if [[ ${v66} == "1" ]]; then
+ v6=`wget -qO- ipv6.ip.sb` 
+ WARPIPv6Status=$(curl -s6 https://www.cloudflare.com/cdn-cgi/trace | grep warp | cut -d= -f2) 
+ case ${WARPIPv6Status} in 
+ on) 
+ WARPIPv6Status=$(green "WARP已开启,当前IPV6地址：$v6 ") 
+ ;; 
+ off) 
+ WARPIPv6Status=$(yellow "WARP未开启，当前IPV6地址：$v6 ") 
+ ;; 
+ *) 
+ WARPIPv6Status=$(red "无IPV6 ") 
+ esac 
+elif [[ ${v66} == "0" ]]; then
+echo 
+
+ fi 
+ 
+Print_ALL_Status_menu() {
+blue "-----------------------"
+blue "WARP 运行状态\t: ${WireGuardStatus}"
+blue "IPv4 网络状态\t: ${WARPIPv4Status}"
+blue "IPv6 网络状态\t: ${WARPIPv6Status}"
+blue "-----------------------"
+}
+
 if [[ ${bit} == "x86_64" ]]; then
 
 function wo646(){
@@ -194,7 +245,7 @@ systemctl start wg-quick@wgcf
 rm -f wgcf*
 grep -qE '^[ ]*label[ ]*2002::/16[ ]*2' /etc/gai.conf || echo 'label 2002::/16   2' | sudo tee -a /etc/gai.conf
 yellow " 检测是否成功启动Warp！\n 显示IPV6地址：$(wget -qO- ipv6.ip.sb) "
-green " 如上方显示IPV6地址：2a09:…………，则说明成功！\n 如上方无IP显示，则说明失败喽！ "
+green " 如上方显示IPV6地址：2a09:…………，则说明成功！\n 如上方IPV6显示本地IP，则说明失败喽！ "
 }
 
 function wo64(){
@@ -365,7 +416,7 @@ systemctl enable wg-quick@wgcf
 systemctl start wg-quick@wgcf
 rm -f wgcf*
 yellow " 检测是否成功启动（IPV4+IPV6）双栈Warp！\n 显示IPV4地址：$(wget -qO- ipv4.ip.sb) 显示IPV6地址：$(wget -qO- ipv6.ip.sb) "
-green " 如上方显示IPV4地址：8.…………，IPV6地址：2a09:…………，则说明成功啦！\n 如上方IPV4无IP显示,IPV6显示本地IP，则说明失败喽！！ "
+green " 如上方显示IPV4地址：8.…………，IPV6地址：2a09:…………，则说明成功啦！\n 如上方IPV4显示本地IP,IPV6无ip显示，则说明失败喽！！ "
 }
 
 function warp4(){
@@ -538,7 +589,7 @@ systemctl enable wg-quick@wgcf
 systemctl start wg-quick@wgcf
 rm -f wgcf*
 yellow " 检测是否成功启动（IPV4+IPV6）双栈Warp！\n 显示IPV4地址：$(wget -qO- ipv4.ip.sb) 显示IPV6地址：$(wget -qO- ipv6.ip.sb) "
-green " 如上方显示IPV4地址：8.…………，IPV6地址：2a09:…………，则说明成功啦！\n 如上方IPV4无IP显示,IPV6显示本地IP，则说明失败喽！ "
+green " 如上方显示IPV4地址：8.…………，IPV6地址：2a09:…………，则说明成功啦！\n 如上方IPV4显示本地IP,IPV6显示本地IP，则说明失败喽！ "
 }
 
 function warp464(){
@@ -741,27 +792,24 @@ function start_menu(){
     
     green " 15. 自动开启WARP功能 "
     
-    green " 16. 查看当前WARP运行状态 "
+    green " 16. 有IPV4：更新脚本 "
     
-    green " 17. 查看VPS当前正在使用的IPV4/IPV6地址 "
-    
-    green " 18. 有IPV4：更新脚本 "
-    
-    green " 19. 无IPV4：更新脚本 "
+    green " 17. 无IPV4：更新脚本 "
     
     white " ==================三、代理协议脚本选择（更新中）==========================================="
     
-    green " 20.使用mack-a脚本（支持Xray, V2ray, Trojan-go） "
+    green " 18.使用mack-a脚本（支持Xray, V2ray, Trojan-go） "
     
-    green " 21.使用phlinhng脚本（支持Xray, Trojan-go, SS+v2ray-plugin） "
+    green " 19.使用phlinhng脚本（支持Xray, Trojan-go, SS+v2ray-plugin） "
     
     white " ============================================================================================="
     
-    green " 22. 重启VPS实例，请重新连接SSH "
+    green " 20. 重启VPS实例，请重新连接SSH "
     
     white " ===============================================================================================" 
     
     green " 0. 退出脚本 "
+    Print_ALL_Status_menu
     echo
     read -p "请输入数字:" menuNumberInput
     case "$menuNumberInput" in
@@ -811,24 +859,18 @@ function start_menu(){
            owarp
 	;;
 	16 )
-           status
-	;;
-	17 )
-           cv46
-	;;
-	18 )
            up4
 	;;
-	19 )
+	17 )
            up6
 	;;
-	20 )
+	18 )
            macka
 	;;
-	21 )
+	19 )
            phlinhng
 	;;
-	22 )
+	20 )
            reboot
 	;;
         0 )
@@ -1312,25 +1354,22 @@ function start_menu(){
     
     green " 15. 自动开启WARP功能 "
     
-    green " 16. 查看当前WARP运行状态 "
+    green " 16. 有IPV4：更新脚本 "
     
-    green " 17. 查看VPS当前正在使用的IPV4/IPV6地址 "
-    
-    green " 18. 有IPV4：更新脚本 "
-    
-    green " 19. 无IPV4：更新脚本 "
+    green " 17. 无IPV4：更新脚本 "
     
     white " ===============三、代理协议脚本选择（更新中）==========================================="
     
-    green " 20.使用mack-a脚本（支持ARM架构VPS，支持协议：Xray, V2ray, Trojan-go） "
+    green " 18.使用mack-a脚本（支持ARM架构VPS，支持协议：Xray, V2ray, Trojan-go） "
     
     white " ============================================================================================="
     
-    green " 21. 重启VPS实例，请重新连接SSH "
+    green " 19. 重启VPS实例，请重新连接SSH "
     
     white " =============================================================================================" 
     
     green " 0. 退出脚本 "
+    Print_ALL_Status_menu
     echo
     read -p "请输入数字:" menuNumberInput
     case "$menuNumberInput" in
@@ -1380,21 +1419,15 @@ function start_menu(){
            owarp
 	;;
 	16 )
-           status
-	;;
-	17 )
-           cv46
-	;;
-	18 )
            up4
 	;;
-	19 )
+	17 )
            up6
 	;;
-	20 )
+	18 )
            macka
 	;;
-	21 )
+	19 )
            reboot
 	;;
         0 )
